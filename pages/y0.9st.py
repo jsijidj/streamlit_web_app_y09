@@ -142,7 +142,7 @@ if submit_btn:
         if 'y' in df.columns and 'C_tip1' in df.columns:
             # y-C散布図をプロット
             fig, ax = plt.subplots()
-            ax.scatter(df['y'], df['C_tip1'], label='y vs C_tip1')
+            ax.scatter(df['C_tip1'], df['y'], label='y vs C_tip1')
             ax.set_ylabel('y')
             ax.set_xlabel('C_tip1')
             ax.legend()
@@ -159,7 +159,7 @@ if submit_btn:
         if 'y' in df.columns and 'C_tip2' in df.columns:
             # y-C散布図をプロット
             fig, ax = plt.subplots()
-            ax.scatter(df['y'], df['C_tip2'], label='y vs C_tip2')
+            ax.scatter(df['C_tip2'], df['y'], label='y vs C_tip2')
             ax.set_ylabel('y')
             ax.set_xlabel('C_tip2')
             ax.legend()
@@ -176,7 +176,7 @@ if submit_btn:
         if 'y/y0.9_tip1' in df.columns and 'C_tip1' in df.columns:
             # y/y0.9-Cグラフをプロット
             fig, ax = plt.subplots()
-            ax.scatter(df['y/y0.9_tip1'], df['C_tip1'], label='y/y0.9tip_1 vs C_tip1')
+            ax.scatter(df['C_tip1'], df['y/y0.9_tip1'], label='y/y0.9tip_1 vs C_tip1')
             ax.set_ylabel('y/y0.9_tip1')
             ax.set_xlabel('C_tip1')
             ax.legend()
@@ -192,7 +192,7 @@ if submit_btn:
         if 'y/y0.9_tip2' in df.columns and 'C_tip2' in df.columns:
             # y/y0.9-Cグラフをプロット
             fig, ax = plt.subplots()
-            ax.scatter(df['y/y0.9_tip2'], df['C_tip2'], label='y/y0.9_tip2 vs C_tip2')
+            ax.scatter(df['C_tip2'], df['y/y0.9_tip2'], label='y/y0.9_tip2 vs C_tip2')
             ax.set_ylabel('y/y0.9_tip2')
             ax.set_xlabel('C_tip2')
             ax.legend()
@@ -208,7 +208,7 @@ if submit_btn:
         if 'y' in df.columns and 'u' in df.columns:
             # y-Uグラフをプロット
             fig, ax = plt.subplots()
-            ax.scatter(df['y'], df['u'], label='y vs u')
+            ax.scatter(df['u'], df['y'], label='y vs u')
             ax.set_ylabel('y')
             ax.set_xlabel('u')
             ax.legend()
@@ -224,7 +224,7 @@ if submit_btn:
         if 'y/y0.9_tip1' in df.columns and 'u/u0.9_tip1' in df.columns:
             # y/y0.9-u/u0.9グラフをプロット
             fig, ax = plt.subplots()
-            ax.scatter(df['y/y0.9_tip1'], df['u/u0.9_tip1'], label='tip1_y/y0.9 vs u/u0.9')
+            ax.scatter(df['u/u0.9_tip1'], df['y/y0.9_tip1'], label='tip1_y/y0.9 vs u/u0.9')
             ax.set_ylabel('y/y0.9_tip1')
             ax.set_xlabel('u/u0.9_tip1')
             ax.legend()
@@ -240,7 +240,7 @@ if submit_btn:
         if 'y/y0.9_tip2' in df.columns and 'u/u0.9_tip2' in df.columns:
             # y/y0.9-u/u0.9グラフをプロット
             fig, ax = plt.subplots()
-            ax.scatter(df['y/y0.9_tip2'], df['u/u0.9_tip2'], label='tip2_y/y0.9 vs u/u0.9')
+            ax.scatter(df['u/u0.9_tip2'], df['y/y0.9_tip2'], label='tip2_y/y0.9 vs u/u0.9')
             ax.set_ylabel('y/y0.9_tip2')
             ax.set_xlabel('u/u0.9_tip2')
             ax.legend()
