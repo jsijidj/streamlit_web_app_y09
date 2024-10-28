@@ -137,120 +137,137 @@ if submit_btn:
         st.write('データ表')
         st.dataframe(df)
 
-        buf = io.BytesIO()  # バッファ作成
-
         if 'y' in df.columns and 'C_tip1' in df.columns:
+            buf1 = io.BytesIO()  # バッファ作成
             # y-C散布図をプロット
-            fig, ax = plt.subplots()
-            ax.scatter(df['C_tip1'], df['y'], label='y vs C_tip1')
+            fig1, ax = plt.subplots()
+            ax.scatter(df['C_tip1'], df['y'], label='C_tip1 vs y')
             ax.set_ylabel('y')
             ax.set_xlabel('C_tip1')
             ax.legend()
-            plt.savefig(buf, format='png')
-            st.pyplot(fig)
+            plt.savefig(buf1, format='png')
+            buf1.seek(0)
+            st.pyplot(fig1)
 
-        st.download_button(
-            label="上のグラフをダウンロード",
-            data=buf.getvalue(),
-            file_name='y_C_tip1_scatter_plot.png',
-            mime='image/png'
-        )
+            st.download_button(
+                label="上のグラフをダウンロード",
+                data=buf1.getvalue(),
+                file_name='y_C_tip1_scatter_plot.png',
+                mime='image/png'
+            )
 
         if 'y' in df.columns and 'C_tip2' in df.columns:
+            buf2 = io.BytesIO()  # バッファ作成
             # y-C散布図をプロット
-            fig, ax = plt.subplots()
-            ax.scatter(df['C_tip2'], df['y'], label='y vs C_tip2')
+            fig2, ax = plt.subplots()
+            ax.scatter(df['C_tip2'], df['y'], label='C_tip2 vs y')
             ax.set_ylabel('y')
             ax.set_xlabel('C_tip2')
             ax.legend()
-            plt.savefig(buf, format='png')
-            st.pyplot(fig)
+            plt.savefig(buf2, format='png')
+            buf2.seek(0)
+            st.pyplot(fig2)
 
-        st.download_button(
-            label="上のグラフをダウンロード",
-            data=buf.getvalue(),
-            file_name='y_C_tip2_scatter_plot.png',
-            mime='image/png'
-        )
+            st.download_button(
+                label="上のグラフをダウンロード",
+                data=buf2.getvalue(),
+                file_name='y_C_tip2_scatter_plot.png',
+                mime='image/png'
+            )
 
         if 'y/y0.9_tip1' in df.columns and 'C_tip1' in df.columns:
+            buf3 = io.BytesIO()  # バッファ作成
             # y/y0.9-Cグラフをプロット
-            fig, ax = plt.subplots()
-            ax.scatter(df['C_tip1'], df['y/y0.9_tip1'], label='y/y0.9tip_1 vs C_tip1')
+            fig3, ax = plt.subplots()
+            ax.scatter(df['C_tip1'], df['y/y0.9_tip1'], label='C_tip1 vs y/y0.9tip_1')
             ax.set_ylabel('y/y0.9_tip1')
             ax.set_xlabel('C_tip1')
             ax.legend()
-            st.pyplot(fig)
+            plt.savefig(buf3, format='png')
+            buf3.seek(0)
+            st.pyplot(fig3)
             
-        st.download_button(
-            label="上のグラフをダウンロード",
-            data=buf.getvalue(),
-            file_name='y_y09_tip1_C_tip1_scatter_plot.png',
-            mime='image/png'
-        )    
+            st.download_button(
+                label="上のグラフをダウンロード",
+                data=buf3.getvalue(),
+                file_name='y_y09_tip1_C_tip1_scatter_plot.png',
+                mime='image/png'
+            )
 
         if 'y/y0.9_tip2' in df.columns and 'C_tip2' in df.columns:
+            buf4 = io.BytesIO()  # バッファ作成
             # y/y0.9-Cグラフをプロット
-            fig, ax = plt.subplots()
-            ax.scatter(df['C_tip2'], df['y/y0.9_tip2'], label='y/y0.9_tip2 vs C_tip2')
+            fig4, ax = plt.subplots()
+            ax.scatter(df['C_tip2'], df['y/y0.9_tip2'], label='C_tip2 vs y/y0.9_tip2')
             ax.set_ylabel('y/y0.9_tip2')
             ax.set_xlabel('C_tip2')
             ax.legend()
-            st.pyplot(fig)
+            plt.savefig(buf4, format='png')
+            buf4.seek(0)
+            st.pyplot(fig4)
             
-        st.download_button(
-            label="上のグラフをダウンロード",
-            data=buf.getvalue(),
-            file_name='y_y09_tip2_C_tip2_scatter_plot.png',
-            mime='image/png'
-        )
+            st.download_button(
+                label="上のグラフをダウンロード",
+                data=buf4.getvalue(),
+                file_name='y_y09_tip2_C_tip2_scatter_plot.png',
+                mime='image/png'
+            )
 
         if 'y' in df.columns and 'u' in df.columns:
+            buf5 = io.BytesIO()  # バッファ作成
             # y-Uグラフをプロット
-            fig, ax = plt.subplots()
-            ax.scatter(df['u'], df['y'], label='y vs u')
+            fig5, ax = plt.subplots()
+            ax.scatter(df['u'], df['y'], label='u vs y')
             ax.set_ylabel('y')
             ax.set_xlabel('u')
             ax.legend()
-            st.pyplot(fig)
+            plt.savefig(buf5, format='png')
+            buf5.seek(0)
+            st.pyplot(fig5)
 
             st.download_button(
             label="上のグラフをダウンロード",
-            data=buf.getvalue(),
+            data=buf5.getvalue(),
             file_name='y_u_scatter_plot.png',
             mime='image/png'
-        )
+            )
 
         if 'y/y0.9_tip1' in df.columns and 'u/u0.9_tip1' in df.columns:
+            buf6 = io.BytesIO()  # バッファ作成
             # y/y0.9-u/u0.9グラフをプロット
-            fig, ax = plt.subplots()
-            ax.scatter(df['u/u0.9_tip1'], df['y/y0.9_tip1'], label='tip1_y/y0.9 vs u/u0.9')
+            fig6, ax = plt.subplots()
+            ax.scatter(df['u/u0.9_tip1'], df['y/y0.9_tip1'], label='u/u0.9_tip1 vs y/y0.9_tip1')
             ax.set_ylabel('y/y0.9_tip1')
             ax.set_xlabel('u/u0.9_tip1')
             ax.legend()
-            st.pyplot(fig)
+            plt.savefig(buf6, format='png')
+            buf6.seek(0)
+            st.pyplot(fig6)
             
             st.download_button(
             label="上のグラフをダウンロード",
-            data=buf.getvalue(),
+            data=buf6.getvalue(),
             file_name='y_y09_tip1_u_u09_tip1_scatter_plot.png',
             mime='image/png'
-        )
+            )
             
         if 'y/y0.9_tip2' in df.columns and 'u/u0.9_tip2' in df.columns:
+            buf7 = io.BytesIO()  # バッファ作成
             # y/y0.9-u/u0.9グラフをプロット
-            fig, ax = plt.subplots()
-            ax.scatter(df['u/u0.9_tip2'], df['y/y0.9_tip2'], label='tip2_y/y0.9 vs u/u0.9')
+            fig7, ax = plt.subplots()
+            ax.scatter(df['u/u0.9_tip2'], df['y/y0.9_tip2'], label='u/u0.9_tip2 vs y/y0.9_tip2')
             ax.set_ylabel('y/y0.9_tip2')
             ax.set_xlabel('u/u0.9_tip2')
             ax.legend()
-            st.pyplot(fig)
+            plt.savefig(buf7, format='png')
+            buf7.seek(0)
+            st.pyplot(fig7)
             
             st.download_button(
             label="上のグラフをダウンロード",
-            data=buf.getvalue(),
+            data=buf7.getvalue(),
             file_name='y_y09_tip2_u_u09_tip2_scatter_plot.png',
             mime='image/png'
-        )
+            )
     else:
         st.write('値を入力してください')
