@@ -407,7 +407,7 @@ if submit_btn:
 
             return Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw
         
-        d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
+        Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
         
         temp_df = pd.DataFrame({'Y': DataY, 'C': DataC, 'U': DataU, 'CdY': Data_d_sumA, '(1-C)UdY': Data_d_sumB, '(1-C)U^3dY': Data_d_sumD, 'int_Y^1{(1-C)dY}': Data_sumE, '[(1-C)Y+int_Y^1{(1-C)dY}]': Data_d_sumF, 'UdY': Data_d_sumG})
         temp_df = temp_df.dropna(how='all', axis=1)
