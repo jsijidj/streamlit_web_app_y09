@@ -48,6 +48,8 @@ with st.form(key='data_form'):
     dX = st.text_input('dX=', '')
     st.text('Cmiの値')
     Cmi = st.text_input('Cmi=', '')
+    st.text('水温Tの値')
+    T = st.text_input('T=', '')
     st.text('yの値')
     suuti_y = st.text_input('y=', '')
     st.text('C(長針)の値')
@@ -88,9 +90,11 @@ if submit_btn:
             qw = float(qw)
             dc = (qw ** 2 / g) ** (1 / 3)
 
-            N = ((14 ** (deg ** (-0.65))) * S * (100 / deg * S - 1)) - (0.041 * deg) + 6.27
+            N = ((14 * (deg ** (-0.65))) * S * (((100 / deg) * S) - 1)) - (0.041 * deg) + 6.27
 
-            nu = 10 ** (-6)
+            T = float(T)
+
+            nu = (7.105482 * (10 ** -18) * (T ** 6)) - (2.51304153 * (10 **-15) * (T ** 5)) + (3.67082783 * (10 ** -13) * (T ** 4)) - (2.97438215 * (10 ** -11) * (T ** 3)) + (1.56879688 * (10 ** -9) * (T ** 2)) - (6.1236331 * (10 ** -8) * T) + (1.79251606 * (10 ** -6))
             Re = qw / nu  #レイノルズ数
             ur = float(ur)
 
@@ -115,15 +119,14 @@ if submit_btn:
             #疑似空気混入不等流
             #疑似等流の抵抗係数fuの実験式
             #fu = 8 * (dwu/dc) **3 * sin(deg)
-            fu = (-9.2 * deg * (10)**(-4) + 0.12) * np.tanh(4 * S) 
-            + 3.8 * (deg ** 2) * (10 **(-5)) -4.4 * deg * 10 ** (-3) + 0.135
+            fu = (((-9.2 * deg * ((10)**(-4))) + 0.12) * np.tanh(4 * S)) + (3.8 * (deg ** 2) * (10 **(-5))) + (- 4.4 * deg * (10 ** (-3))) + 0.135
 
             Dwu = (fu / (8 * np.sin(rad))) ** (1 / 3)
 
-            Cmu = (6.9 / deg - 0.12) * S + 0.656 * (1 - exp(-0.0356 * (deg - 10.9))) + 0.073
+            Cmu = (6.9 / deg - 0.12) * S + 0.656 * (1 - np.exp(-0.0356 * (deg - 10.9))) + 0.073
 
-            small_ko = ur * Dwi * dc * np.cos(deg * pi / 180) / qw
-            Ko = (1 / (1 - Cmu)) * (1 / (1 - Cmu) * log((1 - Cmi) / (Cmu - Cmi)) - 1 / (1 - Cmi))
+            small_ko = ur * Dwi * dc * np.cos(rad) / qw
+            Ko = (1 / (1 - Cmu)) * (1 / (1 - Cmu) * np.log((1 - Cmi) / (Cmu - Cmi)) - 1 / (1 - Cmi))
 
             #データを表形式で取得
             data1 = pd.DataFrame({
@@ -133,6 +136,7 @@ if submit_btn:
                 'qw':[qw],
                 'dc':[dc],
                 'N':[N],
+                'T':[T],
                 'nu':[nu],
                 'Re=qw/nu':[Re],
                 'ur':[ur],
@@ -310,13 +314,13 @@ if submit_btn:
 
     #Y,U,C の取得
     #50回繰り返す場合 => for i in range(int(50 / dX)):
-    for i in range(int(50 / dX)):
+    for i in range(int((50 / dX) + 2)):
         Y = 0
         m = 200
         dY = 1 / m
 
         D_dash = ((0.848 * Cm) - 0.00302) / (1 + (1.1375 * Cm) - (2.2925 * (Cm ** 2)))
-        k_dash = np.arctanh(0.1 ** 0.5) + 1 / (2 * D_dash)
+        k_dash = (np.arctanh(0.1 ** 0.5)) + (1 / (2 * D_dash))
 
         #ループ内でデータを格納するための空の配列を作成する
         #vba上のReDimをpythonのnumpyで変換 
@@ -325,7 +329,7 @@ if submit_btn:
         DataU = np.zeros(m + 1)
 
         for j in range(m + 1):
-            C = 1 - np.tanh(k_dash - Y / (2 * D_dash)) ** 2
+            C = 1 - ((np.tanh(k_dash - (Y / (2 * D_dash)))) ** 2)
             U = Y ** (1 / N)
 
             DataC[j] = C
@@ -339,7 +343,7 @@ if submit_btn:
         
         #空のエントリやすべてがNA(欠損値)のエントリを除外
         temp_df = temp_df.dropna(how='all', axis=1)
-        
+
         #Cp,Cvの取得
 
         #d_sumA = CdY, d_sumB = (1-C)UdY, d_sumD = (1-C)U^3dY, sumE = integral_Y^1{(1-C)dY}, d_sumF = [(1-C)Y+int_Y^1{(1-C)dY}]UdY, d_sumG = UdY
@@ -550,7 +554,7 @@ if submit_btn:
         
         # 再度D_dashとk_dashをCmの更新後に計算
         D_dash = ((0.848 * Cm) - 0.00302) / (1 + (1.1375 * Cm) - (2.2925 * (Cm ** 2))) 
-        k_dash = np.arctanh(0.1 ** 0.5) + 1 / (2 * D_dash)
+        k_dash = (np.arctanh(0.1 ** 0.5)) + (1 / (2 * D_dash))
         Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
         Dw, DDwDX = calculate_clear_water_depth(Dw, Dwu, Cp, Cv, rad, dX)
 
@@ -562,7 +566,7 @@ if submit_btn:
         Dw_Cm = Dw_Cm_caluculate(Dw, Cm)
 
         #energy_caluculate
-        Es = (Cp * Dw * cos(rad)) + (1 / 2) * Cv * ((Dw) ** -2)
+        Es = (Cp * Dw * np.cos(rad)) + (1 / 2) * Cv * ((Dw) ** -2)
 
         # Reset arrays for next iteration
         DataY.fill(0)
