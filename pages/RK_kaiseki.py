@@ -66,8 +66,10 @@ with st.form(key='data_form'):
     C_y09_tip2_c = st.text_input('C_y09_tip2_c', '')
     st.text('対応する水深y')
     C_y09_tip2_y = st.text_input('C_y09_tip2_y', '')
-    st.text('u0.9に近い値')
-    u_09_list = st.text_input('u_09_list', '')
+    st.text('u0.9に近い値(長針)')
+    u_09_list_tip1 = st.text_input('u_09_list_tip1', '')
+    st.text('u0.9に近い値(短針)')
+    u_09_list_tip2 = st.text_input('u_09_list_tip2', '')
 
     st.text('ns=')
     suuti_ns = st.text_input('ns', '')
@@ -199,11 +201,14 @@ if submit_btn:
         st.write('y0.9_tip2が不明です')
     
     #uのリスト化
-    if u_09_list:
-        u_09_list_1 = [float(i) for i in u_09_list.split(',')]
+    if u_09_list_tip1:
+        u_09_list_1 = [float(i) for i in u_09_list_tip1.split(',')]
+
+    if u_09_list_tip2:
+        u_09_list_2 = [float(i) for i in u_09_list_tip2.split(',')]
 
     #u0.9の算出(長針)
-    if C_y09_tip1_c and u_09_list and len(C_y09_list_1) == 2 and len(u_09_list_1) == 2:
+    if C_y09_tip1_c and u_09_list_tip1 and len(C_y09_list_1) == 2 and len(u_09_list_1) == 2:
         #傾き
         u_09_a_tip1 = ((u_09_list_1[1]-u_09_list_1[0]) / (C_y09_list_1[1] - C_y09_list_1[0]))
         #切片
@@ -216,11 +221,11 @@ if submit_btn:
         st.write('u0.9_tip1が不明です')
 
     #u0.9の算出(短針)
-    if C_y09_tip2_c and u_09_list and len(C_y09_list_2) == 2 and len(u_09_list_1) == 2:
+    if C_y09_tip2_c and u_09_list_tip2 and len(C_y09_list_2) == 2 and len(u_09_list_2) == 2:
         #傾き
-        u_09_a_tip2 = ((u_09_list_1[1]-u_09_list_1[0]) / (C_y09_list_2[1] - C_y09_list_2[0]))
+        u_09_a_tip2 = ((u_09_list_2[1]-u_09_list_2[0]) / (C_y09_list_2[1] - C_y09_list_2[0]))
         #切片
-        u_09_n_tip2 = u_09_list_1[0] - u_09_a_tip1 * C_y09_list_2[0]
+        u_09_n_tip2 = u_09_list_2[0] - u_09_a_tip2 * C_y09_list_2[0]
 
         u09_tip2 = u_09_a_tip2 * 0.9 + u_09_n_tip2
 
