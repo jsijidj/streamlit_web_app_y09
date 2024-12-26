@@ -361,11 +361,10 @@ if submit_btn:
         Data_d_sumF = np.zeros(m + 1)
         Data_d_sumG = np.zeros(m + 1)
 
-        def calculate_Cp_Cv(DataC, DataU, DataY, dY, m):
-            sumA = sumB = sumD = sumE = sumF = sumG = 0  # 初期化
-        
-            for j in range(m):
-                if j == 0:
+        def calculate_Cp_Cv(DataC, DataU, DataY, dY, m): 
+            sumA = sumB = sumD = sumE = sumF = sumG = 0 # 初期化 
+            for j in range(m): 
+                if j == 0: 
                     d_sumA = (dY * DataC[j]) / 2 
                     d_sumB = (dY * (1 - DataC[j]) * DataU[j]) / 2 
                     d_sumD = (dY * (1 - DataC[j]) * (DataU[j]) ** 3) / 2 
@@ -374,47 +373,51 @@ if submit_btn:
                     d_sumA = (dY * (DataC[j+1] + DataC[j])) / 2 
                     d_sumB = (dY * ((1 - DataC[j+1]) * DataU[j+1] + (1 - DataC[j]) * DataU[j])) / 2 
                     d_sumD = (dY * ((1 - DataC[j+1]) * (DataU[j+1]) ** 3 + (1 - DataC[j]) * (DataU[j]) ** 3)) / 2 
-                    d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2
-        
-                sumA += d_sumA
-                sumB += d_sumB
-                sumD += d_sumD
-                sumG += d_sumG
-        
-                sumE = 0  # sumEの初期化
-                for k in range(j, m):
-                    if k < m - 1:
-                        if k == 0:
-                            d_sumE = (dY * (1 - DataC[k])) / 2
-                        else:
-                            d_sumE = (dY * ((1 - DataC[k + 1]) + (1 - DataC[k]))) / 2
-                    else:
-                        d_sumE = 0
-                    sumE += d_sumE
-                    Data_sumE[k] = sumE
-        
-                if j + 1 < len(DataY):
-                    if j == 0:
-                        d_sumF = (dY * (((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2
-                    else:
-                        d_sumF = (dY * (((1 - DataC[j + 1]) * DataY[j + 1] + sumE) * DataU[j + 1] + ((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2
-                else:
-                    d_sumF = 0  # 安全策としての初期化
-        
-                sumF += d_sumF
-        
-                Data_d_sumA[j] = d_sumA
-                Data_d_sumB[j] = d_sumB
-                Data_d_sumD[j] = d_sumD
-                Data_sumE[j] = sumE
-                Data_d_sumF[j] = d_sumF
-                Data_d_sumG[j] = d_sumG
-        
-            Cp = sumF / ((1 - sumA) * sumB)
-            Cv = (((1 - sumA) ** 2) * sumD) / (sumB ** 3)
-            V_age_Vw = ((1 - sumA) * sumG) / sumB
-        
-            return Cp, Cv, Data_d_sumA, Data_d_sumB, Data_d_sumD, Data_sumE, Data_d_sumF, sumA, sumB, sumG, Data_d_sumG, V_age_Vw
+                    d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2 
+                    
+                sumA += d_sumA 
+                sumB += d_sumB 
+                sumD += d_sumD 
+                sumG += d_sumG 
+                
+                sumE = 0 # ここでsumEをリセット 
+                for k in range(j, m): 
+                    if k < m - 1 and k == 0: 
+                        d_sumE = (dY * ((1 - DataC[k + 1]) + (1 - DataC[k]))) / 2 
+                    
+                    elif k < m - 1 and k is not 0: 
+                        d_sumE = (dY * ((1 - DataC[k + 2]) + (1 - DataC[k + 1]))) / 2 
+                    
+                    else: 
+                        d_sumE = 0 
+                    
+                    sumE += d_sumE 
+                    Data_sumE[j] = sumE 
+                    
+                    if j + 1 < len(DataY) and j == 0: # j + 1 が範囲内か確認 
+                        d_sumF = (dY * (((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2 
+                    
+                    elif j + 1 < len(DataY) and j is not 0:
+                        d_sumF = (dY * (((1 - DataC[j + 1]) * DataY[j + 1] + sumE) * DataU[j + 1] + ((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2 
+                    
+                    else: 
+                        d_sumF = 0 # 安全策としての初期化 
+                    sumF += d_sumF 
+                    
+                    Data_d_sumA[j] = d_sumA 
+                    Data_d_sumB[j] = d_sumB 
+                    Data_d_sumD[j] = d_sumD 
+                    Data_sumE[j] = sumE 
+                    Data_d_sumF[j] = d_sumF 
+                    Data_d_sumG[j] = d_sumG 
+                    # デバッグ用出力 
+                    print(f"Iteration {j}: sumA={sumA}, sumB={sumB}, sumD={sumD}, sumE={sumE}, sumF={sumF}, sumG={sumG}") 
+                    
+                    Cp = sumF / ((1 - sumA) * sumB) 
+                    Cv = (((1 - sumA) ** 2) * sumD) / (sumB ** 3) 
+                    V_age_Vw = ((1 - sumA) * sumG) / sumB 
+                    
+                    return Cp, Cv, Data_d_sumA, Data_d_sumB, Data_d_sumD, Data_sumE, Data_d_sumF, sumA, sumB, sumG, Data_d_sumG,V_age_Vw
 
         Cp, Cv, Data_d_sumA, Data_d_sumB, Data_d_sumD, Data_sumE, Data_d_sumF, sumA, sumB, sumG, Data_d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
                 
