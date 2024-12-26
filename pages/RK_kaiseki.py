@@ -363,17 +363,11 @@ if submit_btn:
 
         def calculate_Cp_Cv(DataC, DataU, DataY, dY, m): 
             sumA = sumB = sumD = sumE = sumF = sumG = 0 # 初期化 
-            for j in range(m): 
-                if j == 0: 
-                    d_sumA = (dY * DataC[j]) / 2 
-                    d_sumB = (dY * (1 - DataC[j]) * DataU[j]) / 2 
-                    d_sumD = (dY * (1 - DataC[j]) * (DataU[j]) ** 3) / 2 
-                    d_sumG = (dY * DataU[j]) / 2 
-                else: 
-                    d_sumA = (dY * (DataC[j+1] + DataC[j])) / 2 
-                    d_sumB = (dY * ((1 - DataC[j+1]) * DataU[j+1] + (1 - DataC[j]) * DataU[j])) / 2 
-                    d_sumD = (dY * ((1 - DataC[j+1]) * (DataU[j+1]) ** 3 + (1 - DataC[j]) * (DataU[j]) ** 3)) / 2 
-                    d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2 
+            for j in range(m):
+                d_sumA = (dY * (DataC[j+1] + DataC[j])) / 2 
+                d_sumB = (dY * ((1 - DataC[j+1]) * DataU[j+1] + (1 - DataC[j]) * DataU[j])) / 2 
+                d_sumD = (dY * ((1 - DataC[j+1]) * (DataU[j+1]) ** 3 + (1 - DataC[j]) * (DataU[j]) ** 3)) / 2 
+                d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2 
                     
                 sumA += d_sumA 
                 sumB += d_sumB 
@@ -382,10 +376,7 @@ if submit_btn:
                 
                 sumE = 0 # ここでsumEをリセット 
                 for k in range(j, m): 
-                    if k < m - 1 and k == 0: 
-                        d_sumE = (dY * ((1 - DataC[k + 1]) + (1 - DataC[k]))) / 2 
-                    
-                    elif k < m - 1 and k is not 0: 
+                    if k < m - 1: 
                         d_sumE = (dY * ((1 - DataC[k + 2]) + (1 - DataC[k + 1]))) / 2 
                     
                     else: 
@@ -394,10 +385,8 @@ if submit_btn:
                     sumE += d_sumE 
                     Data_sumE[j] = sumE 
                     
-                    if j + 1 < len(DataY) and j == 0: # j + 1 が範囲内か確認 
-                        d_sumF = (dY * (((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2 
                     
-                    elif j + 1 < len(DataY) and j is not 0:
+                    if j + 1 < len(DataY):
                         d_sumF = (dY * (((1 - DataC[j + 1]) * DataY[j + 1] + sumE) * DataU[j + 1] + ((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2 
                     
                     else: 
@@ -420,7 +409,7 @@ if submit_btn:
                     return Cp, Cv, Data_d_sumA, Data_d_sumB, Data_d_sumD, Data_sumE, Data_d_sumF, sumA, sumB, sumG, Data_d_sumG,V_age_Vw
 
         Cp, Cv, Data_d_sumA, Data_d_sumB, Data_d_sumD, Data_sumE, Data_d_sumF, sumA, sumB, sumG, Data_d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
-                
+            
         temp_df = pd.DataFrame({'Y': DataY, 'C': DataC, 'U': DataU, 'CdY': Data_d_sumA, '(1-C)UdY': Data_d_sumB, '(1-C)U^3dY': Data_d_sumD, 'int_Y^1{(1-C)dY}': Data_sumE, '[(1-C)Y+int_Y^1{(1-C)dY}]': Data_d_sumF, 'UdY': Data_d_sumG})
         temp_df = temp_df.dropna(how='all', axis=1)
 
