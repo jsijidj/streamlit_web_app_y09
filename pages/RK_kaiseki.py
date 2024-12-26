@@ -361,54 +361,58 @@ if submit_btn:
         Data_d_sumF = np.zeros(m + 1)
         Data_d_sumG = np.zeros(m + 1)
 
-        def calculate_Cp_Cv(DataC, DataU, DataY, dY, m): 
-            sumA = sumB = sumD = sumE = sumF = sumG = 0 # 初期化 
-            for j in range(m):
-                d_sumA = (dY * (DataC[j+1] + DataC[j])) / 2 
-                d_sumB = (dY * ((1 - DataC[j+1]) * DataU[j+1] + (1 - DataC[j]) * DataU[j])) / 2 
-                d_sumD = (dY * ((1 - DataC[j+1]) * (DataU[j+1]) ** 3 + (1 - DataC[j]) * (DataU[j]) ** 3)) / 2 
-                d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2 
-                    
-                sumA += d_sumA 
-                sumB += d_sumB 
-                sumD += d_sumD 
-                sumG += d_sumG 
-                
-                sumE = 0 # ここでsumEをリセット 
-                for k in range(j, m): 
-                    if k < m - 1: 
-                        d_sumE = (dY * ((1 - DataC[k + 2]) + (1 - DataC[k + 1]))) / 2 
-                    
-                    else: 
-                        d_sumE = 0 
-                    
-                    sumE += d_sumE 
-                    Data_sumE[j] = sumE 
-                    
-                    
-                    if j + 1 < len(DataY):
-                        d_sumF = (dY * (((1 - DataC[j + 1]) * DataY[j + 1] + sumE) * DataU[j + 1] + ((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2 
-                    
-                    else: 
-                        d_sumF = 0 # 安全策としての初期化 
-                    sumF += d_sumF 
-                    
-                    Data_d_sumA[j] = d_sumA 
-                    Data_d_sumB[j] = d_sumB 
-                    Data_d_sumD[j] = d_sumD 
-                    Data_sumE[j] = sumE 
-                    Data_d_sumF[j] = d_sumF 
-                    Data_d_sumG[j] = d_sumG 
-                    # デバッグ用出力 
-                    print(f"Iteration {j}: sumA={sumA}, sumB={sumB}, sumD={sumD}, sumE={sumE}, sumF={sumF}, sumG={sumG}") 
-                    
-                    Cp = sumF / ((1 - sumA) * sumB) 
-                    Cv = (((1 - sumA) ** 2) * sumD) / (sumB ** 3) 
-                    V_age_Vw = ((1 - sumA) * sumG) / sumB 
-                    
-                    return Cp, Cv, Data_d_sumA, Data_d_sumB, Data_d_sumD, Data_sumE, Data_d_sumF, sumA, sumB, sumG, Data_d_sumG,V_age_Vw
+        def calculate_Cp_Cv(DataC, DataU, DataY, dY, m):
+            sumA = sumB = sumD = sumF = sumG = 0
 
-        Cp, Cv, Data_d_sumA, Data_d_sumB, Data_d_sumD, Data_sumE, Data_d_sumF, sumA, sumB, sumG, Data_d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
+            for j in range(m):
+                d_sumA = (dY * (DataC[j+1] + DataC[j])) / 2
+                d_sumB = (dY * ((1 - DataC[j+1]) * DataU[j+1] + (1 - DataC[j]) * DataU[j])) / 2
+                d_sumD = (dY * ((1 - DataC[j+1]) * (DataU[j+1]) ** 3 + (1 - DataC[j]) * (DataU[j]) ** 3 )) / 2
+                
+                d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2
+
+                sumA += d_sumA
+                sumB += d_sumB
+                sumD += d_sumD
+                sumG += d_sumG
+
+                sumE = 0
+                d_sumE = 0
+                #配列を関数のように呼び出していることです。具体的には、DataC(k + 2)やDataY(j + 1)などの部分です。これらは配列の要素にアクセスするために角括弧 [] を使用する必要があります。
+                
+                for k in range(j,m):
+                    if k < m - 1:
+                        d_sumE = (dY * ((1 - DataC[k + 2]) + (1 - DataC[k + 1]))) / 2
+
+                    else:
+                        d_sumE = 0
+                        
+                    sumE += d_sumE 
+                
+                    Data_sumE[j] = sumE
+                
+                if j + 1 < len(DataY): # j + 1 が範囲内か確認 
+                    d_sumF = (dY * (((1 - DataC[j + 1]) * DataY[j + 1] + sumE) * DataU[j + 1] + ((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2 
+                else: 
+                    d_sumF = 0 # 安全策としての初期化
+
+                sumF += d_sumF 
+
+                Data_d_sumA[j] = d_sumA
+                Data_d_sumB[j] = d_sumB
+                Data_d_sumD[j] = d_sumD
+                Data_sumE[k] = sumE
+                Data_d_sumF[j] = d_sumF
+                Data_d_sumG[j] = d_sumG
+            
+            Cp = sumF / ((1 - sumA) * sumB)
+            Cv = (((1 - sumA) ** 2) * sumD) / (sumB ** 3)
+            #空気混入不等流の断面平均流速
+            V_age_Vw = ((1 - sumA) * sumG) / sumB
+
+            return Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw
+        
+        Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
             
         temp_df = pd.DataFrame({'Y': DataY, 'C': DataC, 'U': DataU, 'CdY': Data_d_sumA, '(1-C)UdY': Data_d_sumB, '(1-C)U^3dY': Data_d_sumD, 'int_Y^1{(1-C)dY}': Data_sumE, '[(1-C)Y+int_Y^1{(1-C)dY}]': Data_d_sumF, 'UdY': Data_d_sumG})
         temp_df = temp_df.dropna(how='all', axis=1)
