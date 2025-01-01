@@ -50,6 +50,8 @@ with st.form(key='data_form'):
     Cmi = st.text_input('Cmi=', '')
     st.text('水温Tの値')
     T = st.text_input('T=', '')
+    st.text('(x-xi)/dcの値')
+    x_xi_dc = st.text_input('(x-xi)/dc=', '')
     st.text('yの値')
     suuti_y = st.text_input('y=', '')
     st.text('C(長針)の値')
@@ -95,6 +97,7 @@ if submit_btn:
             N = ((14 * (deg ** (-0.65))) * S * (((100 / deg) * S) - 1)) - (0.041 * deg) + 6.27
 
             T = float(T)
+            x_xi_dc = float(x_xi_dc)
 
             nu = (7.105482 * (10 ** -18) * (T ** 6)) - (2.51304153 * (10 **-15) * (T ** 5)) + (3.67082783 * (10 ** -13) * (T ** 4)) - (2.97438215 * (10 ** -11) * (T ** 3)) + (1.56879688 * (10 ** -9) * (T ** 2)) - (6.1236331 * (10 ** -8) * T) + (1.79251606 * (10 ** -6))
             Re = qw / nu  #レイノルズ数
@@ -361,59 +364,60 @@ if submit_btn:
         Data_d_sumF = np.zeros(m + 1)
         Data_d_sumG = np.zeros(m + 1)
 
-        def calculate_Cp_Cv(DataC, DataU, DataY, dY, m):
-            sumA = sumB = sumD = sumF = sumG = 0
+        Data_sumA = np.zeros(m + 1)
+        Data_sumB = np.zeros(m + 1)
+        Data_sumD = np.zeros(m + 1)
+        Data_sumE = np.zeros(m + 1)
+        Data_sumF = np.zeros(m + 1)
+        Data_sumG = np.zeros(m + 1)
 
+        def calculate_Cp_Cv(DataC, DataU, DataY, dY, m): 
+            sumA = sumB = sumD = sumE = sumF = sumG = 0 # 初期化 
             for j in range(m):
-                d_sumA = (dY * (DataC[j+1] + DataC[j])) / 2
-                d_sumB = (dY * ((1 - DataC[j+1]) * DataU[j+1] + (1 - DataC[j]) * DataU[j])) / 2
-                d_sumD = (dY * ((1 - DataC[j+1]) * (DataU[j+1]) ** 3 + (1 - DataC[j]) * (DataU[j]) ** 3 )) / 2
+                d_sumA = (dY * (DataC[j+1] + DataC[j])) / 2 
+                d_sumB = (dY * ((1 - DataC[j+1]) * DataU[j+1] + (1 - DataC[j]) * DataU[j])) / 2 
+                d_sumD = (dY * ((1 - DataC[j+1]) * (DataU[j+1]) ** 3 + (1 - DataC[j]) * (DataU[j]) ** 3)) / 2 
+                d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2 
+                    
+                sumA += d_sumA 
+                sumB += d_sumB 
+                sumD += d_sumD 
+                sumG += d_sumG 
                 
-                d_sumG = (dY * (DataU[j+1] + DataU[j])) / 2
-
-                sumA += d_sumA
-                sumB += d_sumB
-                sumD += d_sumD
-                sumG += d_sumG
-
-                sumE = 0
-                d_sumE = 0
-                #配列を関数のように呼び出していることです。具体的には、DataC(k + 2)やDataY(j + 1)などの部分です。これらは配列の要素にアクセスするために角括弧 [] を使用する必要があります。
-                
-                for k in range(j,m):
-                    if k < m - 1:
+                sumE = 0 # ここでsumEをリセット 
+                for k in range(j, m): 
+                    if k < m - 1: 
                         d_sumE = (dY * ((1 - DataC[k + 2]) + (1 - DataC[k + 1]))) / 2
-
-                    else:
-                        d_sumE = 0
-                        
+                    else: 
+                        d_sumE = 0 
+                    
                     sumE += d_sumE 
-                
-                    Data_sumE[j] = sumE
-                
-                if j + 1 < len(DataY): # j + 1 が範囲内か確認 
-                    d_sumF = (dY * (((1 - DataC[j + 1]) * DataY[j + 1] + sumE) * DataU[j + 1] + ((1 - DataC[j]) * DataY[j] + sumE) * DataU[j])) / 2 
+                    Data_sumE[j] = sumE 
+                    
+                    
+                if j + 1 < len(DataY):    
+                    d_sumF = (dY * (((1 - DataC[j + 1]) * DataY[j + 1] + Data_sumE[j+1]) * DataU[j + 1] + ((1 - DataC[j]) * DataY[j] + Data_sumE[j]) * DataU[j])) / 2 
                 else: 
-                    d_sumF = 0 # 安全策としての初期化
-
+                    d_sumF = 0 # 安全策としての初期化 
                 sumF += d_sumF 
+                    
+                Data_d_sumA[j] = d_sumA 
+                Data_d_sumB[j] = d_sumB 
+                Data_d_sumD[j] = d_sumD 
+                Data_sumE[j] = sumE 
+                Data_d_sumF[j] = d_sumF 
+                Data_d_sumG[j] = d_sumG 
+                # デバッグ用出力 
+                #print(f"Iteration {j}: d_sumA={d_sumA}, d_sumB={d_sumB}, d_sumD={d_sumD}, d_sumE={d_sumE}, d_sumF={d_sumF}, d_sumG={d_sumG}, sumA={sumA}, sumB={sumB}, sumD={sumD}, sumE={sumE}, sumF={sumF}, sumG={sumG}") 
+                    
+            Cp = sumF / ((1 - sumA) * sumB) 
+            Cv = (((1 - sumA) ** 2) * sumD) / (sumB ** 3) 
+            V_age_Vw = ((1 - sumA) * sumG) / sumB 
+                    
+            return Cp, Cv, d_sumA, d_sumB, d_sumD, d_sumE, sumE, d_sumF, sumA, sumB, sumD, sumF, sumG, d_sumG, V_age_Vw
 
-                Data_d_sumA[j] = d_sumA
-                Data_d_sumB[j] = d_sumB
-                Data_d_sumD[j] = d_sumD
-                Data_sumE[k] = sumE
-                Data_d_sumF[j] = d_sumF
-                Data_d_sumG[j] = d_sumG
-            
-            Cp = sumF / ((1 - sumA) * sumB)
-            Cv = (((1 - sumA) ** 2) * sumD) / (sumB ** 3)
-            #空気混入不等流の断面平均流速
-            V_age_Vw = ((1 - sumA) * sumG) / sumB
-
-            return Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw
+        Cp, Cv, d_sumA, d_sumB, d_sumD, d_sumE, sumE, d_sumF, sumA, sumB, sumD, sumF, sumG, d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
         
-        Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
-            
         temp_df = pd.DataFrame({'Y': DataY, 'C': DataC, 'U': DataU, 'CdY': Data_d_sumA, '(1-C)UdY': Data_d_sumB, '(1-C)U^3dY': Data_d_sumD, 'int_Y^1{(1-C)dY}': Data_sumE, '[(1-C)Y+int_Y^1{(1-C)dY}]': Data_d_sumF, 'UdY': Data_d_sumG})
         temp_df = temp_df.dropna(how='all', axis=1)
 
@@ -506,12 +510,20 @@ if submit_btn:
                 ax.legend()
                 plt.savefig(buf6, format='png')
                 buf6.seek(0)
-                st.pyplot(fig6)       
+                st.pyplot(fig6) 
+    
 
         #ルンゲクッタ法から積分計算
         def calculate_clear_water_depth(Dw, Dwu, Cp, Cv, rad, dX):
-            DDwDX = (np.sin(rad) * ((Dw ** 3) - (Dwu ** 3))) / (Cp * (Dw ** 3) * np.cos(rad) - Cv)
-        
+            DDwDX = (np.sin(rad)) * ((Dw ** 3) - (Dwu ** 3)) / ((Cp * (Dw ** 3) * np.cos(rad)) - Cv)
+
+            #k1 = dX * DDwDX
+            #k2 = dX * DDwDX + k1 / 2
+            #k3 = dX * DDwDX + k2 / 2
+            #k4 = dX * DDwDX + k3
+
+            #Dw = Dw + k1
+            
             k1 = dX * DDwDX 
             k2 = dX * ((np.sin(rad) * ((Dw + k1/2) ** 3 - Dwu ** 3)) / (Cp * ((Dw + k1/2) ** 3) * np.cos(rad) - Cv)) 
             k3 = dX * ((np.sin(rad) * ((Dw + k2/2) ** 3 - Dwu ** 3)) / (Cp * ((Dw + k2/2) ** 3) * np.cos(rad) - Cv)) 
@@ -521,7 +533,7 @@ if submit_btn:
 
             return Dw, DDwDX
         
-        Dw, DDwDX = calculate_clear_water_depth(Dw, Dwu, Cp, Cv, rad, dX)
+        Dw, DDwDX = calculate_clear_water_depth(Dw, Dwu, Cp, Cv, rad, dX) 
 
         #depth_averaged_air_concentration
         def depth_averaged_air_concentration(Cmi, Cmu, small_ko, X, Xi, Dwi, Ko):
@@ -560,8 +572,8 @@ if submit_btn:
         # 再度D_dashとk_dashをCmの更新後に計算
         D_dash = ((0.848 * Cm) - 0.00302) / (1 + (1.1375 * Cm) - (2.2925 * (Cm ** 2))) 
         k_dash = (np.arctanh(0.1 ** 0.5)) + (1 / (2 * D_dash))
-        Cp, Cv, d_sumA, d_sumB, d_sumD, sumE, d_sumF, sumA, sumB, sumG, d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
-        Dw, DDwDX = calculate_clear_water_depth(Dw, Dwu, Cp, Cv, rad, dX)
+        Cp, Cv, d_sumA, d_sumB, d_sumD, d_sumE, sumE, d_sumF, sumA, sumB, sumD, sumF, sumG, d_sumG, V_age_Vw = calculate_Cp_Cv(DataC, DataU, DataY, dY, m)
+        #Dw, DDwDX = calculate_clear_water_depth(Dw, Dwu, Cp, Cv, rad, dX)
 
         def Dw_Cm_caluculate(Dw, Cm):
             Dw_Cm = Dw / (1 - Cm)
@@ -581,69 +593,131 @@ if submit_btn:
         X_Xi = X - Xi
 
         #それぞれのデータを格納するリスト
-        data_X.append(X)
-        data_X_Xi.append(X_Xi)
-        data_D_dash.append(D_dash)
-        data_k_dash.append(k_dash)
-        data_Cm.append(Cm)
-        data_Cp.append(Cp)
-        data_Cv.append(Cv)
-        data_Dw.append(Dw)
-        data_dDwdx.append(DDwDX)
-        data_Dw_Cm.append(Dw_Cm)
-        data_Es.append(Es)
-        data_V_age_Vw.append(V_age_Vw)
+        if i is not 51:
+            data_X.append(X)
+            data_X_Xi.append(X_Xi)
+            data_D_dash.append(D_dash)
+            data_k_dash.append(k_dash)
+            data_Cm.append(Cm)
+        if i is not 0:
+            data_Cp.append(Cp)
+            data_Cv.append(Cv)
+        if i is not 51:
+            data_Dw.append(Dw)
+            data_dDwdx.append(DDwDX)
+            data_Dw_Cm.append(Dw_Cm)
+            data_Es.append(Es)
+        if i is not 0:
+            data_V_age_Vw.append(V_age_Vw)
 
         # Update X
         X += dX
 
-    # 結果をデータフレームに追加
-    def dataframe50(data_X,data_X_Xi,data_D_dash,data_k_dash,data_Cm,data_Cp,data_Cv,data_Dw,data_dDwdx,data_Dw_Cm,data_Es,data_V_age_Vw):
-        return pd.DataFrame({
-            'x/dc':data_X,
-            '(x-xi)/dc':data_X_Xi,
-            'D_dash':data_D_dash,
-            'k_dash':data_k_dash,
-            'Cm':data_Cm,
-            'Cp':data_Cp,
-            'Cv':data_Cv,
-            'dw/dc':data_Dw,
-            'd(dw/dc)/d(x/dc)':data_dDwdx,
-            'y0.9/dc':data_Dw_Cm,
-            'Es/dc':data_Es,
-            'Vage/Vw':data_V_age_Vw
-        })
-    data50 = dataframe50(data_X,data_X_Xi,data_D_dash,data_k_dash,data_Cm,data_Cp,data_Cv,data_Dw,data_dDwdx,data_Dw_Cm,data_Es,data_V_age_Vw)
+    Data_j_sumA_tip1 = np.zeros(m + 1)
+    Data_j_sumB_tip1 = np.zeros(m + 1)
+    Data_j_sumD_tip1 = np.zeros(m + 1)
+    Data_j_sumE_tip1 = np.zeros(m + 1)
+    Data_j_sumF_tip1 = np.zeros(m + 1)
+    Data_j_sumG_tip1 = np.zeros(m + 1)
 
-    st.dataframe(data50)
+    Data_jd_sumA_tip1 = np.zeros(m + 1)
+    Data_jd_sumB_tip1 = np.zeros(m + 1)
+    Data_jd_sumD_tip1 = np.zeros(m + 1)
+    Data_jd_sumE_tip1 = np.zeros(m + 1)
+    Data_jd_sumF_tip1 = np.zeros(m + 1)
+    Data_jd_sumG_tip1 = np.zeros(m + 1)
 
-    #グラフの作成
-    if 'Cm' in data50.columns and 'dw/dc' in data50.columns and 'y0.9/dc' in data50.columns and '(x-xi)/dc' in data50.columns:
-        buf7 = io.BytesIO()  # バッファ作成
-        fig7, ax = plt.subplots()
-        ax.plot(data_X_Xi, data_Cm, label='Cm')
-        ax.plot(data_X_Xi, data_Dw, label='dw/dc')
-        ax.plot(data_X_Xi, data_Dw_Cm, label='y0.9/dc')
-        ax.set_xlabel('(x-xi)/dc')
-        ax.set_ylabel('Cm, dw/dc, y0.9/dc')
-        ax.set_title('分布グラフ')
-        ax.legend()
-        plt.savefig(buf7, format='png')
-        buf7.seek(0)
-        st.pyplot(fig7)
+    def j_tip1_Cp_Cv(y_list, C_list_tip1, u_list): 
+        for i in range(len(y_list)-1):
+            jd_sumA_tip1 = ((y_list[i+1] - y_list[i]) * (C_list_tip1[i+1] + C_list_tip1[i])) / 2 
+            jd_sumB_tip1 = ((y_list[i+1] - y_list[i]) * (((1 - C_list_tip1[i+1]) * u_list[i+1]) + ((1 - C_list_tip1[i]) * u_list[i]))) / 2 
+            jd_sumD_tip1 = ((y_list[i+1] - y_list[i]) * ((1 - C_list_tip1[i+1]) * (u_list[i+1]) ** 3 + (1 - C_list_tip1[i]) * (u_list[i]) ** 3)) / 2 
+            jd_sumG_tip1 = ((y_list[i+1] - y_list[i]) * (u_list[i+1] + u_list[i])) / 2 
+                
+            j_sumA_tip1 += jd_sumA_tip1 
+            j_sumB_tip1 += jd_sumB_tip1
+            j_sumD_tip1 += jd_sumD_tip1
+            j_sumG_tip1 += jd_sumG_tip1
+            
+            for k in range(i, len(y_list)): 
+                if k < len(y_list) - 1: 
+                    jd_sumE_tip1 = ((y_list[k + 1] - y_list[k]) * ((1 - C_list_tip1[k + 2]) + (1 - C_list_tip1[k + 1]))) / 2
+                else: 
+                    jd_sumE_tip1 = 0 
+                
+                j_sumE_tip1 += jd_sumE_tip1 
+                Data_jd_sumE_tip1[j] = j_sumE_tip1 
+                
+                
+            if i + 1 < len(y_list):    
+                jd_sumF_tip1 = ((y_list[i+1] - y_list[i]) * (((1 - C_list_tip1[i + 1]) * y_list[i + 1] + Data_jd_sumE_tip1[j+1]) * u_list[j + 1] + ((1 - C_list_tip1[j]) * y_list[j] + Data_jd_sumE_tip1[j]) * u_list[j])) / 2 
+            else: 
+                jd_sumF_tip1 = 0 # 安全策としての初期化 
+            j_sumF_tip1 += jd_sumF_tip1 
+                
+            Data_jd_sumA_tip1[j] = jd_sumA_tip1
+            Data_jd_sumB_tip1[j] = jd_sumB_tip1 
+            Data_jd_sumD_tip1[j] = jd_sumD_tip1 
+            Data_j_sumE_tip1[j] = j_sumE_tip1
+            Data_jd_sumF_tip1[j] = jd_sumF_tip1
+            Data_jd_sumG_tip1[j] = jd_sumG_tip1
+                
+        j_Cp_tip1 = j_sumF_tip1 / ((1 - j_sumA_tip1) * j_sumB_tip1) 
+        j_Cv_tip1 = (((1 - j_sumA_tip1) ** 2) * j_sumD_tip1) / (j_sumB_tip1 ** 3) 
+        j_V_age_Vw_tip1 = ((1 - j_sumA_tip1) * j_sumG_tip1) / j_sumB_tip1 
+                
+        return j_Cp_tip1, j_Cv_tip1, jd_sumA_tip1, jd_sumB_tip1, jd_sumD_tip1, jd_sumE_tip1, j_sumE_tip1, jd_sumF_tip1, j_sumA_tip1, j_sumB_tip1, j_sumD_tip1, j_sumF_tip1, j_sumG_tip1, jd_sumG_tip1, j_V_age_Vw_tip1
+
+    j_Cp_tip1, j_Cv_tip1, jd_sumA_tip1, jd_sumB_tip1, jd_sumD_tip1, jd_sumE_tip1, j_sumE_tip1, jd_sumF_tip1, j_sumA_tip1, j_sumB_tip1, j_sumD_tip1, j_sumF_tip1, j_sumG_tip1, jd_sumG_tip1, j_V_age_Vw_tip1 = calculate_Cp_Cv(y_list, C_list_tip1, u_list, dY, m)
+    
+
+# 結果をデータフレームに追加
+def dataframe50(data_X,data_X_Xi,data_D_dash,data_k_dash,data_Cm,data_Cp,data_Cv,data_Dw,data_dDwdx,data_Dw_Cm,data_Es,data_V_age_Vw):
+    return pd.DataFrame({
+        'x/dc':data_X,
+        '(x-xi)/dc':data_X_Xi,
+        'D_dash':data_D_dash,
+        'k_dash':data_k_dash,
+        'Cm':data_Cm,
+        'Cp':data_Cp,
+        'Cv':data_Cv,
+        'dw/dc':data_Dw,
+        'd(dw/dc)/d(x/dc)':data_dDwdx,
+        'y0.9/dc':data_Dw_Cm,
+        'Es/dc':data_Es,
+        'Vage/Vw':data_V_age_Vw
+    })
+data50 = dataframe50(data_X,data_X_Xi,data_D_dash,data_k_dash,data_Cm,data_Cp,data_Cv,data_Dw,data_dDwdx,data_Dw_Cm,data_Es,data_V_age_Vw)
+
+st.dataframe(data50)
+
+#グラフの作成
+if 'Cm' in data50.columns and 'dw/dc' in data50.columns and 'y0.9/dc' in data50.columns and '(x-xi)/dc' in data50.columns:
+    buf7 = io.BytesIO()  # バッファ作成
+    fig7, ax = plt.subplots()
+    ax.plot(data_X_Xi, data_Cm, label='Cm')
+    ax.plot(data_X_Xi, data_Dw, label='dw/dc')
+    ax.plot(data_X_Xi, data_Dw_Cm, label='y0.9/dc')
+    ax.set_xlabel('(x-xi)/dc')
+    ax.set_ylabel('Cm, dw/dc, y0.9/dc')
+    ax.set_title('分布グラフ')
+    ax.legend()
+    plt.savefig(buf7, format='png')
+    buf7.seek(0)
+    st.pyplot(fig7)
         
 
-    if '(x-xi)/dc' in data50.columns and 'Cv' in data50.columns:
-        buf8 = io.BytesIO()  # バッファ作成
-        fig8, ax = plt.subplots()
-        ax.plot(data_X_Xi,data_Cv, label='Cv')
-        ax.set_xlabel('(x-xi)/dc')
-        ax.set_ylabel('Cv')
-        ax.set_title('分布グラフ')
-        ax.legend()
-        plt.savefig(buf8, format='png')
-        buf8.seek(0)
-        st.pyplot(fig8)
+if '(x-xi)/dc' in data50.columns and 'Cv' in data50.columns:
+    buf8 = io.BytesIO()  # バッファ作成
+    fig8, ax = plt.subplots()
+    ax.plot(data_X_Xi,data_Cv, label='Cv')
+    ax.set_xlabel('(x-xi)/dc')
+    ax.set_ylabel('Cv')
+    ax.set_title('分布グラフ')
+    ax.legend()
+    plt.savefig(buf8, format='png')
+    buf8.seek(0)
+    st.pyplot(fig8)
 
     if '(x-xi)/dc' in data50.columns and 'Cp' in data50.columns:
         buf9 = io.BytesIO()  # バッファ作成
