@@ -252,15 +252,26 @@ if submit_btn:
         if y09_tip1 is not None:         
             data['y/y0.9_tip1'] = [y / y09_tip1 for y in y_list]
             data['y/y0.9_tip2'] = [y / y09_tip2 for y in y_list]
+            y_y09_list = [y / y09_tip1 for y in y_list]
+            filter_y_list_tip1 = [float(i) for i in y_list if y_list <= 0.900]
+            filter_y_list_tip1.append(y09_tip1)
+            filter_y_list_tip2 = [float(i) for i in y_list if y_list <= 0.900]
+            filter_y_list_tip2.append(y09_tip2)
 
     #Cのリスト化(長針)
     if suuti_c_tip1:     
             C_list_tip1 = [float(i) for i in suuti_c_tip1.split(',')]
+            #0.900を超える値を排除 
+            filter_C_list_tip1 = [float(i) for i in C_list_tip1 if C_list_tip1 <= 0.900]
+            filter_C_list_tip1.append(0.900)
             data['C_tip1'] = C_list_tip1
 
     #Cのリスト化(短針)
     if suuti_c_tip2:    
         C_list_tip2 = [float(i) for i in suuti_c_tip2.split(',')]
+        #0.900を超える値を排除
+        filter_C_list_tip2 = [float(i) for i in C_list_tip2 if C_list_tip2 <= 0.900]
+        filter_C_list_tip2.append(0.900)
         data['C_tip2'] = C_list_tip2
 
     # uのリスト化 
@@ -270,12 +281,14 @@ if submit_btn:
 
         if u09_tip1 is not None:
             data['u/u0.9_tip1'] = [u / u09_tip1 for u in u_list]
+            u_u09_list_tip1 = [u / u09_tip1 for u in u_list]
 
         else: 
             st.write('u0.9_tip1が設定されていません')
 
         if u09_tip2 is not None:
             data['u/u0.9_tip2'] = [u / u09_tip2 for u in u_list]
+            u_u09_list_tip2 = [u / u09_tip2 for u in u_list]
 
         else:
             st.write('u0.9_tip2が設定されていません')
@@ -627,21 +640,24 @@ if submit_btn:
     Data_jd_sumF_tip1 = np.zeros(m + 1)
     Data_jd_sumG_tip1 = np.zeros(m + 1)
 
-    def j_tip1_Cp_Cv(y_list, C_list_tip1, u_list): 
-        for i in range(len(y_list)-1):
-            jd_sumA_tip1 = ((y_list[i+1] - y_list[i]) * (C_list_tip1[i+1] + C_list_tip1[i])) / 2 
-            jd_sumB_tip1 = ((y_list[i+1] - y_list[i]) * (((1 - C_list_tip1[i+1]) * u_list[i+1]) + ((1 - C_list_tip1[i]) * u_list[i]))) / 2 
-            jd_sumD_tip1 = ((y_list[i+1] - y_list[i]) * ((1 - C_list_tip1[i+1]) * (u_list[i+1]) ** 3 + (1 - C_list_tip1[i]) * (u_list[i]) ** 3)) / 2 
-            jd_sumG_tip1 = ((y_list[i+1] - y_list[i]) * (u_list[i+1] + u_list[i])) / 2 
+
+
+    def j_tip1_Cp_Cv(y_y09_list, C_list_tip1, u_u09_list_tip1): 
+        j_sumA_tip1 = j_sumB_tip1 = j_sumD_tip1 = j_sumE_tip1 = j_sumF_tip1 = j_sumG_tip1 = 0
+        for i in range(len(y_y09_list)-1):
+            jd_sumA_tip1 = ((y_y09_list[i+1] - y_y09_list[i]) * (C_list_tip1[i+1] + C_list_tip1[i])) / 2 
+            jd_sumB_tip1 = ((y_y09_list[i+1] - y_y09_list[i]) * (((1 - C_list_tip1[i+1]) * u_u09_list_tip1[i+1]) + ((1 - C_list_tip1[i]) * u_u09_list_tip1[i]))) / 2 
+            jd_sumD_tip1 = ((y_y09_list[i+1] - y_y09_list[i]) * ((1 - C_list_tip1[i+1]) * (u_u09_list_tip1[i+1]) ** 3 + (1 - C_list_tip1[i]) * (u_u09_list_tip1[i]) ** 3)) / 2 
+            jd_sumG_tip1 = ((y_y09_list[i+1] - y_y09_list[i]) * (u_u09_list_tip1[i+1] + u_u09_list_tip1[i])) / 2 
                 
             j_sumA_tip1 += jd_sumA_tip1 
             j_sumB_tip1 += jd_sumB_tip1
             j_sumD_tip1 += jd_sumD_tip1
             j_sumG_tip1 += jd_sumG_tip1
             
-            for k in range(i, len(y_list)): 
-                if k < len(y_list) - 1: 
-                    jd_sumE_tip1 = ((y_list[k + 1] - y_list[k]) * ((1 - C_list_tip1[k + 2]) + (1 - C_list_tip1[k + 1]))) / 2
+            for k in range(i, len(y_y09_list)): 
+                if k < len(y_y09_list) - 1: 
+                    jd_sumE_tip1 = ((y_y09_list[k + 1] - y_y09_list[k]) * ((1 - C_list_tip1[k + 1]) + (1 - C_list_tip1[k]))) / 2
                 else: 
                     jd_sumE_tip1 = 0 
                 
@@ -649,8 +665,8 @@ if submit_btn:
                 Data_jd_sumE_tip1[j] = j_sumE_tip1 
                 
                 
-            if i + 1 < len(y_list):    
-                jd_sumF_tip1 = ((y_list[i+1] - y_list[i]) * (((1 - C_list_tip1[i + 1]) * y_list[i + 1] + Data_jd_sumE_tip1[j+1]) * u_list[j + 1] + ((1 - C_list_tip1[j]) * y_list[j] + Data_jd_sumE_tip1[j]) * u_list[j])) / 2 
+            if i + 1 < len(y_y09_list):    
+                jd_sumF_tip1 = ((y_y09_list[i+1] - y_y09_list[i]) * (((1 - C_list_tip1[i + 1]) * y_y09_list[i + 1] + Data_jd_sumE_tip1[i+1]) * u_u09_list_tip1[i + 1] + ((1 - C_list_tip1[i]) * y_y09_list[i] + Data_jd_sumE_tip1[i]) * u_u09_list_tip1[i])) / 2 
             else: 
                 jd_sumF_tip1 = 0 # 安全策としての初期化 
             j_sumF_tip1 += jd_sumF_tip1 
@@ -668,7 +684,147 @@ if submit_btn:
                 
         return j_Cp_tip1, j_Cv_tip1, jd_sumA_tip1, jd_sumB_tip1, jd_sumD_tip1, jd_sumE_tip1, j_sumE_tip1, jd_sumF_tip1, j_sumA_tip1, j_sumB_tip1, j_sumD_tip1, j_sumF_tip1, j_sumG_tip1, jd_sumG_tip1, j_V_age_Vw_tip1
 
-    j_Cp_tip1, j_Cv_tip1, jd_sumA_tip1, jd_sumB_tip1, jd_sumD_tip1, jd_sumE_tip1, j_sumE_tip1, jd_sumF_tip1, j_sumA_tip1, j_sumB_tip1, j_sumD_tip1, j_sumF_tip1, j_sumG_tip1, jd_sumG_tip1, j_V_age_Vw_tip1 = calculate_Cp_Cv(y_list, C_list_tip1, u_list, dY, m)
+    j_Cp_tip1, j_Cv_tip1, jd_sumA_tip1, jd_sumB_tip1, jd_sumD_tip1, jd_sumE_tip1, j_sumE_tip1, jd_sumF_tip1, j_sumA_tip1, j_sumB_tip1, j_sumD_tip1, j_sumF_tip1, j_sumG_tip1, jd_sumG_tip1, j_V_age_Vw_tip1 = j_tip1_Cp_Cv(y_y09_list, C_list_tip1, u_u09_list_tip1)
+
+    print(j_Cp_tip1)
+    print(j_Cv_tip1)
+    print(j_V_age_Vw_tip1)
+
+    Data_j_sumA_tip2 = np.zeros(m + 1)
+    Data_j_sumB_tip2 = np.zeros(m + 1)
+    Data_j_sumD_tip2 = np.zeros(m + 1)
+    Data_j_sumE_tip2 = np.zeros(m + 1)
+    Data_j_sumF_tip2 = np.zeros(m + 1)
+    Data_j_sumG_tip2 = np.zeros(m + 1)
+
+    Data_jd_sumA_tip2 = np.zeros(m + 1)
+    Data_jd_sumB_tip2 = np.zeros(m + 1)
+    Data_jd_sumD_tip2 = np.zeros(m + 1)
+    Data_jd_sumE_tip2 = np.zeros(m + 1)
+    Data_jd_sumF_tip2 = np.zeros(m + 1)
+    Data_jd_sumG_tip2 = np.zeros(m + 1)
+
+    def j_tip2_Cp_Cv(y_y09_list, C_list_tip2, u_u09_list_tip2): 
+        j_sumA_tip2 = j_sumB_tip2 = j_sumD_tip2 = j_sumE_tip2 = j_sumF_tip2 = j_sumG_tip2 = 0
+        for i in range(len(y_y09_list)-1):
+            jd_sumA_tip2 = ((y_y09_list[i+1] - y_y09_list[i]) * (C_list_tip2[i+1] + C_list_tip2[i])) / 2 
+            jd_sumB_tip2 = ((y_y09_list[i+1] - y_y09_list[i]) * (((1 - C_list_tip2[i+1]) * u_u09_list_tip2[i+1]) + ((1 - C_list_tip2[i]) * u_u09_list_tip2[i]))) / 2 
+            jd_sumD_tip2 = ((y_y09_list[i+1] - y_y09_list[i]) * ((1 - C_list_tip2[i+1]) * (u_u09_list_tip2[i+1]) ** 3 + (1 - C_list_tip2[i]) * (u_u09_list_tip2[i]) ** 3)) / 2 
+            jd_sumG_tip2 = ((y_y09_list[i+1] - y_y09_list[i]) * (u_u09_list_tip2[i+1] + u_u09_list_tip2[i])) / 2 
+                
+            j_sumA_tip2 += jd_sumA_tip2 
+            j_sumB_tip2 += jd_sumB_tip2
+            j_sumD_tip2 += jd_sumD_tip2
+            j_sumG_tip2 += jd_sumG_tip2
+            
+            for k in range(i, len(y_y09_list)): 
+                if k < len(y_y09_list) - 1: 
+                    jd_sumE_tip2 = ((y_y09_list[k + 1] - y_y09_list[k]) * ((1 - C_list_tip2[k + 1]) + (1 - C_list_tip2[k]))) / 2
+                else: 
+                    jd_sumE_tip2 = 0 
+                
+                j_sumE_tip2 += jd_sumE_tip2 
+                Data_jd_sumE_tip2[j] = j_sumE_tip2 
+                
+                
+            if i + 1 < len(y_y09_list):    
+                jd_sumF_tip2 = ((y_y09_list[i+1] - y_y09_list[i]) * (((1 - C_list_tip2[i + 1]) * y_y09_list[i + 1] + Data_jd_sumE_tip2[i+1]) * u_u09_list_tip2[i + 1] + ((1 - C_list_tip2[i]) * y_y09_list[i] + Data_jd_sumE_tip2[i]) * u_u09_list_tip2[i])) / 2 
+            else: 
+                jd_sumF_tip2 = 0 # 安全策としての初期化 
+            j_sumF_tip2 += jd_sumF_tip2 
+                
+            Data_jd_sumA_tip2[j] = jd_sumA_tip2
+            Data_jd_sumB_tip2[j] = jd_sumB_tip2 
+            Data_jd_sumD_tip2[j] = jd_sumD_tip2 
+            Data_j_sumE_tip2[j] = j_sumE_tip2
+            Data_jd_sumF_tip2[j] = jd_sumF_tip2
+            Data_jd_sumG_tip2[j] = jd_sumG_tip2
+                
+        j_Cp_tip2 = j_sumF_tip2 / ((1 - j_sumA_tip2) * j_sumB_tip2) 
+        j_Cv_tip2 = (((1 - j_sumA_tip2) ** 2) * j_sumD_tip2) / (j_sumB_tip2 ** 3) 
+        j_V_age_Vw_tip2 = ((1 - j_sumA_tip2) * j_sumG_tip2) / j_sumB_tip2 
+                
+        return j_Cp_tip2, j_Cv_tip2, jd_sumA_tip2, jd_sumB_tip2, jd_sumD_tip2, jd_sumE_tip2, j_sumE_tip2, jd_sumF_tip2, j_sumA_tip2, j_sumB_tip2, j_sumD_tip2, j_sumF_tip2, j_sumG_tip2, jd_sumG_tip2, j_V_age_Vw_tip2
+
+    j_Cp_tip2, j_Cv_tip2, jd_sumA_tip2, jd_sumB_tip2, jd_sumD_tip2, jd_sumE_tip2, j_sumE_tip2, jd_sumF_tip2, j_sumA_tip2, j_sumB_tip2, j_sumD_tip2, j_sumF_tip2, j_sumG_tip2, jd_sumG_tip2, j_V_age_Vw_tip2 = j_tip1_Cp_Cv(y_y09_list, C_list_tip2, u_u09_list_tip2)
+
+    #Cmの実験値計算
+    def j_calculate_Cm(y09_tip1, y09_tip2, Cm_tip1, Cm_tip2, filter_C_list_tip1, filter_C_list_tip2, filter_y_list_tip1, filter_y_list_tip2):
+        for i in range(len(y09_tip1)):       
+            d_Cm_tip1 = (filter_y_list_tip1[i + 1] - filter_y_list_tip1[i])* (filter_C_list_tip1[i + 1] + filter_C_list_tip1[i]) / 2
+            j_Cm_tip1 += d_Cm_tip1
+
+        for i in range(len(y09_tip2)):       
+            d_Cm_tip2 = (filter_y_list_tip2[i + 1] - filter_y_list_tip2[i])* (filter_C_list_tip2[i + 1] + filter_C_list_tip2[i]) / 2
+            j_Cm_tip2 += d_Cm_tip2
+
+        return j_Cm_tip1, j_Cm_tip2
+    
+    j_Cm_tip1, j_Cm_tip2 = j_calculate_Cm(y09_tip1, y09_tip2, filter_C_list_tip1, filter_C_list_tip2, filter_y_list_tip1, filter_y_list_tip2)
+
+    j_dw_tip1 = (1 - j_Cm_tip1) * y09_tip1
+    j_dw_tip2 = (1 - j_Cm_tip2) * y09_tip2
+
+    j_Dw_tip1 = j_dw_tip1 / dc
+    j_Dw_tip2 = j_dw_tip2 / dc
+    
+    #ルンゲクッタ法から積分計算
+    def j_calculate_clear_water_depth_tip1(j_Dw_tip1, Dwu, j_Cp_tip1, j_Cv_tip1, rad, dX):
+        j_DDwDX_tip1 = (np.sin(rad)) * ((j_Dw_tip1 ** 3) - (Dwu ** 3)) / ((j_Cp_tip1 * (j_Dw_tip1 ** 3) * np.cos(rad)) - j_Cv_tip1)
+
+        #k1 = dX * DDwDX
+        #k2 = dX * DDwDX + k1 / 2
+        #k3 = dX * DDwDX + k2 / 2
+        #k4 = dX * DDwDX + k3
+
+        #Dw = Dw + k1
+        
+        k1 = dX * j_DDwDX_tip1 
+        k2 = dX * ((np.sin(rad) * ((j_Dw_tip1 + k1/2) ** 3 - Dwu ** 3)) / (j_Cp_tip1 * ((j_Dw_tip1 + k1/2) ** 3) * np.cos(rad) - j_Cv_tip1)) 
+        k3 = dX * ((np.sin(rad) * ((j_Dw_tip1 + k2/2) ** 3 - Dwu ** 3)) / (j_Cp_tip1 * ((j_Dw_tip1 + k2/2) ** 3) * np.cos(rad) - j_Cv_tip1)) 
+        k4 = dX * ((np.sin(rad) * ((j_Dw_tip1 + k3) ** 3 - Dwu ** 3)) / (j_Cp_tip1 * ((j_Dw_tip1 + k3) ** 3) * np.cos(rad) - j_Cv_tip1)) 
+        
+        j_Dw_tip1 = j_Dw_tip1 + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+        return j_Dw_tip1, j_DDwDX_tip1
+    
+    j_Dw_tip1, j_DDwDX_tip1 = j_calculate_clear_water_depth_tip1(j_Dw_tip1, Dwu, j_Cp_tip1, j_Cv_tip1, rad, dX) 
+
+    def j_calculate_clear_water_depth_tip2(j_Dw_tip2, Dwu, j_Cp_tip2, j_Cv_tip2, rad, dX):
+        j_DDwDX_tip2 = (np.sin(rad)) * ((j_Dw_tip2 ** 3) - (Dwu ** 3)) / ((j_Cp_tip2 * (j_Dw_tip2 ** 3) * np.cos(rad)) - j_Cv_tip2)
+
+        #k1 = dX * DDwDX
+        #k2 = dX * DDwDX + k1 / 2
+        #k3 = dX * DDwDX + k2 / 2
+        #k4 = dX * DDwDX + k3
+
+        #Dw = Dw + k1
+        
+        k1 = dX * j_DDwDX_tip2 
+        k2 = dX * ((np.sin(rad) * ((j_Dw_tip2 + k1/2) ** 3 - Dwu ** 3)) / (j_Cp_tip2 * ((j_Dw_tip2 + k1/2) ** 3) * np.cos(rad) - j_Cv_tip2)) 
+        k3 = dX * ((np.sin(rad) * ((j_Dw_tip2 + k2/2) ** 3 - Dwu ** 3)) / (j_Cp_tip2 * ((j_Dw_tip2 + k2/2) ** 3) * np.cos(rad) - j_Cv_tip2)) 
+        k4 = dX * ((np.sin(rad) * ((j_Dw_tip2 + k3) ** 3 - Dwu ** 3)) / (j_Cp_tip2 * ((j_Dw_tip2 + k3) ** 3) * np.cos(rad) - j_Cv_tip2)) 
+        
+        j_Dw_tip2 = j_Dw_tip2 + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+        return j_Dw_tip2, j_DDwDX_tip2
+    
+    j_Dw_tip2, j_DDwDX_tip2 = j_calculate_clear_water_depth_tip2(j_Dw_tip2, Dwu, j_Cp_tip2, j_Cv_tip2, rad, dX)
+
+    #Dw_Cmの実験値計算
+    def j_Dw_Cm_caluculate(j_Dw_tip1, j_Cm_tip1, j_Dw_tip2, j_Cm_tip2):
+        j_Dw_Cm_tip1 = j_Dw_tip1 / (1 - j_Cm_tip1)
+        j_Dw_Cm_tip2 = j_Dw_tip2 / (1 - j_Cm_tip2)
+
+        return j_Dw_Cm_tip1, j_Dw_Cm_tip2
+    j_Dw_Cm_tip1 = j_Dw_Cm_caluculate(j_Dw_tip1, j_Cm_tip1)
+    j_Dw_Cm_tip2 = j_Dw_Cm_caluculate(j_Dw_tip2, j_Cm_tip2)
+
+
+    #energy_caluculate
+    j_Es_tip1 = (j_Cp_tip1 * j_Dw_tip1 * np.cos(rad)) + (1 / 2) * j_Cv_tip1 * ((j_Dw_tip1) ** -2)
+    j_Es_tip2 = (j_Cp_tip2 * j_Dw_tip2 * np.cos(rad)) + (1 / 2) * j_Cv_tip2 * ((j_Dw_tip2) ** -2)
+    
     
 
 # 結果をデータフレームに追加
@@ -698,6 +854,12 @@ if 'Cm' in data50.columns and 'dw/dc' in data50.columns and 'y0.9/dc' in data50.
     ax.plot(data_X_Xi, data_Cm, label='Cm')
     ax.plot(data_X_Xi, data_Dw, label='dw/dc')
     ax.plot(data_X_Xi, data_Dw_Cm, label='y0.9/dc')
+    ax.scatter(x_xi_dc,j_Cm_tip1, label='x-xi/dc vs Cm')
+    ax.scatter(x_xi_dc,j_Cm_tip2, label='x-xi/dc vs Cm')
+    ax.scatter(x_xi_dc,j_Dw_tip1, label='x-xi/dc vs dw/dc')
+    ax.scatter(x_xi_dc,j_Dw_tip2, label='x-xi/dc vs dw/dc')
+    ax.scatter(x_xi_dc,j_Dw_Cm_tip1, label='x-xi/dc vs y0.9/dc')
+    ax.scatter(x_xi_dc,j_Dw_Cm_tip2, label='x-xi/dc vs y0.9/dc')
     ax.set_xlabel('(x-xi)/dc')
     ax.set_ylabel('Cm, dw/dc, y0.9/dc')
     ax.set_title('分布グラフ')
@@ -707,10 +869,12 @@ if 'Cm' in data50.columns and 'dw/dc' in data50.columns and 'y0.9/dc' in data50.
     st.pyplot(fig7)
         
 
-if '(x-xi)/dc' in data50.columns and 'Cv' in data50.columns:
+if '(x-xi)/dc' in data50.columns and 'Cv' in data50.columns:    
     buf8 = io.BytesIO()  # バッファ作成
     fig8, ax = plt.subplots()
     ax.plot(data_X_Xi,data_Cv, label='Cv')
+    ax.scatter(x_xi_dc,j_Cv_tip1, label='x-xi/dc vs Cv')
+    ax.scatter(x_xi_dc,j_Cv_tip2, label='x-xi/dc vs Cv')
     ax.set_xlabel('(x-xi)/dc')
     ax.set_ylabel('Cv')
     ax.set_title('分布グラフ')
@@ -719,38 +883,44 @@ if '(x-xi)/dc' in data50.columns and 'Cv' in data50.columns:
     buf8.seek(0)
     st.pyplot(fig8)
 
-    if '(x-xi)/dc' in data50.columns and 'Cp' in data50.columns:
-        buf9 = io.BytesIO()  # バッファ作成
-        fig9, ax = plt.subplots()
-        ax.plot(data_X_Xi,data_Cp, label='Cp')
-        ax.set_xlabel('(x-xi)/dc')
-        ax.set_ylabel('Cp')
-        ax.set_title('分布グラフ')
-        ax.legend()
-        plt.savefig(buf9, format='png')
-        buf9.seek(0)
-        st.pyplot(fig9)       
+if '(x-xi)/dc' in data50.columns and 'Cp' in data50.columns:
+    buf9 = io.BytesIO()  # バッファ作成
+    fig9, ax = plt.subplots()
+    ax.plot(data_X_Xi,data_Cp, label='Cp')
+    ax.scatter(x_xi_dc,j_Cp_tip1, label='x-xi/dc vs Cp')
+    ax.scatter(x_xi_dc,j_Cp_tip2, label='x-xi/dc vs Cp')
+    ax.set_xlabel('(x-xi)/dc')
+    ax.set_ylabel('Cp')
+    ax.set_title('分布グラフ')
+    ax.legend()
+    plt.savefig(buf9, format='png')
+    buf9.seek(0)
+    st.pyplot(fig9)       
 
-    if 'Es/dc' in data50.columns and '(x-xi)/dc' in data50.columns:
-        buf10 = io.BytesIO()  # バッファ作成
-        fig10, ax = plt.subplots()
-        ax.plot(data_X_Xi, data_Es, label='Es')
-        ax.set_xlabel('(x-xi)/dc')
-        ax.set_ylabel('Es/dc')
-        ax.set_title('分布グラフ')
-        ax.legend()
-        plt.savefig(buf10, format='png')
-        buf10.seek(0)
-        st.pyplot(fig10)
-    
-    if 'Vage/Vw' in data50.columns and '(x-xi)/dc' in data50.columns:
-        buf11 = io.BytesIO()  # バッファ作成
-        fig11, ax = plt.subplots()
-        ax.plot(data_X_Xi, data_V_age_Vw, label='Vage/Vw')
-        ax.set_xlabel('(x-xi)/dc')
-        ax.set_ylabel('Vage/Vw')
-        ax.set_title('分布グラフ')
-        ax.legend()
-        plt.savefig(buf11, format='png')
-        buf11.seek(0)
-        st.pyplot(fig11)
+if 'Es/dc' in data50.columns and '(x-xi)/dc' in data50.columns:
+    buf10 = io.BytesIO()  # バッファ作成
+    fig10, ax = plt.subplots()
+    ax.plot(data_X_Xi, data_Es, label='Es')
+    ax.scatter(x_xi_dc,j_Es_tip1, label='x-xi/dc vs Cv')
+    ax.scatter(x_xi_dc,j_Es_tip2, label='x-xi/dc vs Cv')
+    ax.set_xlabel('(x-xi)/dc')
+    ax.set_ylabel('Es/dc')
+    ax.set_title('分布グラフ')
+    ax.legend()
+    plt.savefig(buf10, format='png')
+    buf10.seek(0)
+    st.pyplot(fig10)
+
+if 'Vage/Vw' in data50.columns and '(x-xi)/dc' in data50.columns:
+    buf11 = io.BytesIO()  # バッファ作成
+    fig11, ax = plt.subplots()
+    ax.plot(data_X_Xi, data_V_age_Vw, label='Vage/Vw')
+    ax.scatter(x_xi_dc,j_V_age_Vw_tip1, label='x-xi/dc vs Vage/Vw')
+    ax.scatter(x_xi_dc,j_V_age_Vw_tip2, label='x-xi/dc vs Vage/Vw')
+    ax.set_xlabel('(x-xi)/dc')
+    ax.set_ylabel('Vage/Vw')
+    ax.set_title('分布グラフ')
+    ax.legend()
+    plt.savefig(buf11, format='png')
+    buf11.seek(0)
+    st.pyplot(fig11)
