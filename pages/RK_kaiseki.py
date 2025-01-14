@@ -236,11 +236,17 @@ if submit_btn:
         u09_tip2 = None
         st.write('u0.9_tip2が不明です')
 
+    data09 = {
+        '長針y0.9' : [y09_tip1],
+        '短針y0.9' : [y09_tip2],
+        '長針u0.9' : [u09_tip1],
+        '短針u0.9' : [u09_tip2]
+    }
 
-    st.write('長針y0.9=',y09_tip1)
-    st.write('短針y0.9=',y09_tip2)
-    st.write('長針u0.9=',u09_tip1)
-    st.write('短針u0.9=',u09_tip2)
+    if data09:
+        df09 = pd.DataFrame(data09)
+        st.write('データ表')
+        st.dataframe(df09)
         
     #データフレーム表示
     data = {}
@@ -253,16 +259,16 @@ if submit_btn:
             data['y/y0.9_tip1'] = [y / y09_tip1 for y in y_list]
             data['y/y0.9_tip2'] = [y / y09_tip2 for y in y_list]
             y_y09_list = [y / y09_tip1 for y in y_list]
-            filter_y_list_tip1 = [float(i) for i in y_list if y_list <= 0.900]
+            filter_y_list_tip1 = [y for y in y_list if y < y09_tip1]
             filter_y_list_tip1.append(y09_tip1)
-            filter_y_list_tip2 = [float(i) for i in y_list if y_list <= 0.900]
+            filter_y_list_tip2 = [y for y in y_list if y < y09_tip2]
             filter_y_list_tip2.append(y09_tip2)
 
     #Cのリスト化(長針)
     if suuti_c_tip1:     
             C_list_tip1 = [float(i) for i in suuti_c_tip1.split(',')]
             #0.900を超える値を排除 
-            filter_C_list_tip1 = [float(i) for i in C_list_tip1 if C_list_tip1 <= 0.900]
+            filter_C_list_tip1 = [c for c in C_list_tip1 if c < 0.900]
             filter_C_list_tip1.append(0.900)
             data['C_tip1'] = C_list_tip1
 
@@ -270,7 +276,7 @@ if submit_btn:
     if suuti_c_tip2:    
         C_list_tip2 = [float(i) for i in suuti_c_tip2.split(',')]
         #0.900を超える値を排除
-        filter_C_list_tip2 = [float(i) for i in C_list_tip2 if C_list_tip2 <= 0.900]
+        filter_C_list_tip2 = [c for c in C_list_tip2 if c < 0.900]
         filter_C_list_tip2.append(0.900)
         data['C_tip2'] = C_list_tip2
 
@@ -747,20 +753,26 @@ if submit_btn:
         return j_Cp_tip2, j_Cv_tip2, jd_sumA_tip2, jd_sumB_tip2, jd_sumD_tip2, jd_sumE_tip2, j_sumE_tip2, jd_sumF_tip2, j_sumA_tip2, j_sumB_tip2, j_sumD_tip2, j_sumF_tip2, j_sumG_tip2, jd_sumG_tip2, j_V_age_Vw_tip2
 
     j_Cp_tip2, j_Cv_tip2, jd_sumA_tip2, jd_sumB_tip2, jd_sumD_tip2, jd_sumE_tip2, j_sumE_tip2, jd_sumF_tip2, j_sumA_tip2, j_sumB_tip2, j_sumD_tip2, j_sumF_tip2, j_sumG_tip2, jd_sumG_tip2, j_V_age_Vw_tip2 = j_tip1_Cp_Cv(y_y09_list, C_list_tip2, u_u09_list_tip2)
+    
+    d_Cm_tip1 = np.zeros(m + 1)
+    j_Cm_tip2 = np.zeros(m + 1)
+    d_Cm_tip2 = np.zeros(m + 1)
+    j_Cm_tip2 = np.zeros(m + 1)
 
     #Cmの実験値計算
-    def j_calculate_Cm(y09_tip1, y09_tip2, Cm_tip1, Cm_tip2, filter_C_list_tip1, filter_C_list_tip2, filter_y_list_tip1, filter_y_list_tip2):
-        for i in range(len(y09_tip1)):       
-            d_Cm_tip1 = (filter_y_list_tip1[i + 1] - filter_y_list_tip1[i])* (filter_C_list_tip1[i + 1] + filter_C_list_tip1[i]) / 2
+    def j_calculate_Cm(filter_C_list_tip1, filter_C_list_tip2, filter_y_list_tip1, filter_y_list_tip2):
+        d_Cm_tip1 = j_Cm_tip1 = d_Cm_tip2 = j_Cm_tip2 = 0
+        for i in range(len(filter_C_list_tip1) - 1):       
+            d_Cm_tip1 = (filter_y_list_tip1[i + 1] - filter_y_list_tip1[i]) * (filter_C_list_tip1[i + 1] + filter_C_list_tip1[i]) / 2
             j_Cm_tip1 += d_Cm_tip1
 
-        for i in range(len(y09_tip2)):       
-            d_Cm_tip2 = (filter_y_list_tip2[i + 1] - filter_y_list_tip2[i])* (filter_C_list_tip2[i + 1] + filter_C_list_tip2[i]) / 2
+        for i in range(len(filter_C_list_tip2) - 1):       
+            d_Cm_tip2 = (filter_y_list_tip2[i + 1] - filter_y_list_tip2[i]) * (filter_C_list_tip2[i + 1] + filter_C_list_tip2[i]) / 2
             j_Cm_tip2 += d_Cm_tip2
 
         return j_Cm_tip1, j_Cm_tip2
     
-    j_Cm_tip1, j_Cm_tip2 = j_calculate_Cm(y09_tip1, y09_tip2, filter_C_list_tip1, filter_C_list_tip2, filter_y_list_tip1, filter_y_list_tip2)
+    j_Cm_tip1, j_Cm_tip2 = j_calculate_Cm(filter_C_list_tip1, filter_C_list_tip2, filter_y_list_tip1, filter_y_list_tip2)
 
     j_dw_tip1 = (1 - j_Cm_tip1) * y09_tip1
     j_dw_tip2 = (1 - j_Cm_tip2) * y09_tip2
@@ -817,16 +829,12 @@ if submit_btn:
         j_Dw_Cm_tip2 = j_Dw_tip2 / (1 - j_Cm_tip2)
 
         return j_Dw_Cm_tip1, j_Dw_Cm_tip2
-    j_Dw_Cm_tip1 = j_Dw_Cm_caluculate(j_Dw_tip1, j_Cm_tip1)
-    j_Dw_Cm_tip2 = j_Dw_Cm_caluculate(j_Dw_tip2, j_Cm_tip2)
-
+    j_Dw_Cm_tip1, j_Dw_Cm_tip2 = j_Dw_Cm_caluculate(j_Dw_tip1, j_Cm_tip1, j_Dw_tip2, j_Cm_tip2)
 
     #energy_caluculate
     j_Es_tip1 = (j_Cp_tip1 * j_Dw_tip1 * np.cos(rad)) + (1 / 2) * j_Cv_tip1 * ((j_Dw_tip1) ** -2)
     j_Es_tip2 = (j_Cp_tip2 * j_Dw_tip2 * np.cos(rad)) + (1 / 2) * j_Cv_tip2 * ((j_Dw_tip2) ** -2)
-    
-    
-
+       
 # 結果をデータフレームに追加
 def dataframe50(data_X,data_X_Xi,data_D_dash,data_k_dash,data_Cm,data_Cp,data_Cv,data_Dw,data_dDwdx,data_Dw_Cm,data_Es,data_V_age_Vw):
     return pd.DataFrame({
